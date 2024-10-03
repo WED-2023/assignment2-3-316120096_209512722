@@ -1,4 +1,4 @@
-const DButils = require("./DButils");
+const DButils = require("./db_utils");
 
 async function markAsFavorite(user_id, recipe_id){
     await DButils.execQuery(`insert into FavoriteRecipes values ('${user_id}',${recipe_id})`);

@@ -1,7 +1,7 @@
 var express = require("express");
 var router = express.Router();
 const MySql = require("../routes/utils/MySql");
-const DButils = require("../routes/utils/DButils");
+const DButils = require("../routes/utils/db_utils");
 const bcrypt = require("bcrypt");
 
 router.post("/Register", async (req, res, next) => {

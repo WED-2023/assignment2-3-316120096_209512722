@@ -1,5 +1,5 @@
-require("dotenv").config();
-//#region express configures
+require("dotenv").config(); // Load environment variables
+
 var express = require("express");
 var path = require("path");
 var logger = require("morgan");
@@ -7,67 +7,53 @@ const session = require("client-sessions");
 var cors = require("cors");
 
 var app = express();
-app.use(logger("dev")); //logger
-app.use(express.json()); // parse application/json
+app.use(logger("dev"));
+app.use(express.json());
+
 app.use(
   session({
     cookieName: "session", // the cookie key name
-    //secret: process.env.COOKIE_SECRET, // the encryption key
-    secret: "template", // the encryption key
-    duration: 24 * 60 * 60 * 1000, // expired after 20 sec
-    activeDuration: 1000 * 60 * 5, // if expiresIn < activeDuration,
-    cookie: {
-      httpOnly: false,
-    },
-    //the session will be extended by activeDuration milliseconds
+    secret: process.env.COOKIE_SECRET || "template", // encryption key from env or fallback to template
+    duration: 24 * 60 * 60 * 1000, // session duration
+    activeDuration: 1000 * 60 * 5, // active session duration
+    cookie: { httpOnly: false },
   })
 );
-app.use(express.urlencoded({ extended: false })); // parse application/x-www-form-urlencoded
-app.use("/uploads", express.static(path.join(__dirname, "uploads"))); // todo : check if needed wtf
 
-//local:
-//app.use(express.static(path.join(__dirname, "dist")));
-//remote:
-app.use(
-  express.static(
-    path.join(__dirname, "../assignment2-1-316120096_209512722/dist")
-  )
-);
-app.get("/", function (req, res) {
-  //remote:
-  res.sendFile(
-    path.join(__dirname, "../assignment2-1-316120096_209512722/dist/index.html")
-  );
-  //local:
-  // res.sendFile(__dirname + "/index.html");
-});
-
-// app.use(cors());
-// app.options("*", cors());
-
+// CORS configuration
 const corsConfig = {
-  origin: true,
+  origin: process.env.NODE_ENV === 'production' ? process.env.BASE_API_URL : process.env.BASE_API_URL_LOCAL, // Use the appropriate origin based on environment
   credentials: true,
 };
 
 app.use(cors(corsConfig));
 app.options("*", cors(corsConfig));
 
-var port = process.env.PORT || "80"; //local=3000 remote=80
-//#endregion
+// Static files setup for production
+app.use(
+  express.static(
+    path.join(__dirname, "../assignment2-1-316120096_209512722/dist")
+  )
+);
+
+app.get("/", function (req, res) {
+  res.sendFile(
+    path.join(__dirname, "../assignment2-1-316120096_209512722/dist/index.html")
+  );
+});
+
+// Routes setup
 const user = require("./routes/user");
 const recipes = require("./routes/recipes");
 const auth = require("./routes/auth");
 
-// ----> For cheking that our server is alive
 app.get("/alive", (req, res) => res.send("I'm alive"));
 
-// Routings
 app.use("/users", user);
 app.use("/recipes", recipes);
 app.use("/auth", auth);
 
-// Default router
+// Error handling middleware
 app.use(function (err, req, res, next) {
   console.log(err);
   let status = 500;
@@ -79,6 +65,7 @@ app.use(function (err, req, res, next) {
   res.status(status).send({ message: err.message, success: false });
 });
 
+var port = process.env.PORT || "80"; // Use port from environment or fallback to 80 for production
 const server = app.listen(port, () => {
   console.log(`Server is listening on port ${port}`);
 });
