@@ -63,12 +63,15 @@ router.get("/details/:recipeId", async (req, res, next) => {
     next(error);
   }
 });
-router.get("/AnalyedInstructions)", async (req, res, next) => {
+router.get("/AnalyedInstructions", async (req, res, next) => {
   try {
-    const recipeId = req.params.recipeId;
-    const username = req.params.username;
-    const analyzedInstructions = await recipes_utils.getRecipeDetails(recipeId);
-    res.status(analyzedInstructions.status).send(analyzedInstructions.data);
+    const recipeId = req.query.recipeId;
+    const username = req.query.username; // Changed from req.params to req.query to match client-side query params
+    const analyzedInstructions = await recipes_utils.getRecipeInstructions(
+      recipeId,
+      username
+    );
+    res.status(200).send(analyzedInstructions);
   } catch (error) {
     next(error);
   }

@@ -124,9 +124,34 @@ async function searchRecipes({
     return [];
   }
 }
+async function getRecipeInstructions(recipeId, userName) {
+  try {
+    console.log("Recipe instructions for " + recipeId, userName);
+    const response = await axios.get(
+      `https://api.spoonacular.com/recipes/${recipeId}/analyzedInstructions`,
+      {
+        params: {
+          apiKey: apiKey, // Your Spoonacular API key
+        },
+      }
+    );
+
+    if (response.data) {
+      console.log(`Recipe instructions for ${userName}:`, response.data);
+      return response.data; // Return the entire JSON response
+    } else {
+      console.log(`No instructions found for recipeId: ${recipeId}`);
+      return [];
+    }
+  } catch (error) {
+    console.error(`Error fetching recipe instructions for ${recipeId}:`, error);
+    throw error;
+  }
+}
 
 module.exports = {
   getRecipeDetails,
   getRecipesPreviewRandom,
   searchRecipes,
+  getRecipeInstructions,
 };
