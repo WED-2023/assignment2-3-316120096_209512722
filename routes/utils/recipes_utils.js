@@ -13,31 +13,22 @@ const apiKey = process.env.spooncular_apiKey || "your-default-api-key"; // Make 
  */
 async function getRecipeDetails(recipeId) {
   try {
-    const response = await axios.get(`${api_domain}/${recipeId}/information`, {
-      params: {
-        apiKey: apiKey,
-      },
-    });
-    const {
-      id,
-      title,
-      readyInMinutes,
-      image,
-      aggregateLikes,
-      vegan,
-      vegetarian,
-      glutenFree,
-    } = response.data;
-    return {
-      id,
-      title,
-      readyInMinutes,
-      image,
-      popularity: aggregateLikes,
-      vegan,
-      vegetarian,
-      glutenFree,
-    };
+    console.log(recipeId);
+    // Call Spoonacular API to get full details of the recipe by ID
+    if (recipeId == undefined) {
+      return { status: 500, data: {} };
+    }
+    const response = await axios.get(
+      `https://api.spoonacular.com/recipes/${recipeId}/information`,
+      {
+        params: {
+          apiKey: apiKey,
+        },
+      }
+    );
+
+    // Return the data in a similar structure to your previous mock
+    return { status: 200, data: { recipe: response.data } };
   } catch (error) {
     console.error("Error fetching recipe details:", error);
     return { status: 500, data: {} }; // Return an empty object on error
@@ -48,7 +39,7 @@ async function getRecipeDetails(recipeId) {
  * Fetch a random set of recipes using the Spoonacular API.
  * @param {number} amount - Number of random recipes to fetch.
  */
-async function getRecipesPreviewRandom(amount = 1) {
+async function getRecipesPreviewRandom(amount = 3) {
   try {
     const response = await axios.get(`${api_domain}/random`, {
       params: {
@@ -57,6 +48,7 @@ async function getRecipesPreviewRandom(amount = 1) {
       },
     });
     const recipes = response.data.recipes;
+    console.log(response.data);
     return { data: { recipes } };
   } catch (error) {
     console.error("Error fetching random recipes:", error);
