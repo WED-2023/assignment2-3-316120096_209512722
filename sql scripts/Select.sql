@@ -1,1 +1,1 @@
-SELECT * FROM mydb.users;
+drop table watched;

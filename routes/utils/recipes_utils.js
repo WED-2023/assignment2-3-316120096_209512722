@@ -1,6 +1,6 @@
 const axios = require("axios");
 const api_domain = "https://api.spoonacular.com/recipes";
-const apiKey = process.env.spooncular_apiKey || "your-default-api-key"; // Make sure to use your environment variable
+const apiKey = process.env.spooncular_apiKey || "11e9dcf4613543f58eb3dfd4c35b0a78"; // Make sure to use your environment variable
 
 /**
  * Mock function for fetching recipe previews based on the amount needed.

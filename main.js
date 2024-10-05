@@ -63,7 +63,7 @@ const auth = require("./routes/auth");
 app.get("/alive", (req, res) => res.send("I'm alive"));
 
 // Routings
-app.use("/users", user);
+app.use("/user", user);
 app.use("/recipes", recipes);
 app.use("/auth", auth);
 
