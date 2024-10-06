@@ -1,1 +1,1 @@
-drop table watched;
+SELECT recipe_id FROM watched WHERE user_name='omerlau' ORDER BY watched_at DESC LIMIT 3;

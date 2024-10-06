@@ -18,23 +18,22 @@ CREATE TABLE IF NOT EXISTS recipes (
     instructions TEXT,
     image TEXT,
     user_name VARCHAR(255),
-    FOREIGN KEY (user_name) REFERENCES users(user_name) -- Referencing user_name
+    CONSTRAINT fk_user_name FOREIGN KEY (user_name) REFERENCES users(user_name) ON DELETE CASCADE
 );
 
--- Create the 'favorites' table
+-- Create the 'favorites' table (without recipe_id as foreign key)
 CREATE TABLE IF NOT EXISTS favorites (
     user_name VARCHAR(255),  -- Reference user_name instead of user_id
-    recipe_id INT,
-    FOREIGN KEY (user_name) REFERENCES users(user_name),  -- Referencing user_name
-    FOREIGN KEY (recipe_id) REFERENCES recipes(id)
+    recipe_id INT,           -- recipe_id is not a foreign key now
+    CONSTRAINT fk_favorites_user FOREIGN KEY (user_name) REFERENCES users(user_name) ON DELETE CASCADE
 );
 
--- Create the 'watched' table
+-- Create the 'watched' table (without recipe_id as foreign key)
 CREATE TABLE IF NOT EXISTS watched (
     user_name VARCHAR(255),  -- Reference user_name instead of user_id
-    recipe_id INT,
+    recipe_id INT,           -- recipe_id is not a foreign key now
     watched_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- Tracks when the recipe was watched
-    FOREIGN KEY (user_name) REFERENCES users(user_name) -- Referencing user_name)
+    CONSTRAINT fk_watched_user FOREIGN KEY (user_name) REFERENCES users(user_name) ON DELETE CASCADE
 );
 
 -- Create the 'user_created_recipes' table
@@ -48,5 +47,5 @@ CREATE TABLE IF NOT EXISTS user_created_recipes (
     instructions TEXT,
     ingredients TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_name) REFERENCES users(user_name) ON DELETE CASCADE  -- Referencing user_name
+    CONSTRAINT fk_user_created_recipes_user FOREIGN KEY (user_name) REFERENCES users(user_name) ON DELETE CASCADE
 );
