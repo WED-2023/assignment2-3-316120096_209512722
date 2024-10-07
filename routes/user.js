@@ -47,6 +47,7 @@ router.get("/favorites/:username", async (req, res, next) => {
 
 router.get("/getwatched/:username", async (req, res, next) => {
   try {
+
     const userName = req.params.username;
 
     if (!userName) {
@@ -109,7 +110,7 @@ router.post("/favorites", async (req, res, next) => {
   }
 });
 
-router.get("/Sorted/:username", async (req, res, next) => {
+router.get("/sorted/:username", async (req, res, next) => {
   try {
     console.log("getwatchedSorted");
     const userName = req.params.username;
@@ -130,47 +131,172 @@ router.get("/Sorted/:username", async (req, res, next) => {
   }
 });
 
-const multer = require("multer");
-const upload = multer({ dest: "uploads/" });
+const multer = require('multer');
+const path = require('path');
+const Joi = require('joi');
+const { execQuery } = require('./utils/DButils'); // Adjust the path to your DButils module
+
+// Multer configuration with absolute path and file type filter
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, path.join(__dirname, '..', 'uploads'));
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + path.extname(file.originalname));
+  },
+});
+
+// File type validation to accept only images
+const fileFilter = function (req, file, cb) {
+  const allowedTypes = /jpeg|jpg|png|gif/;
+  const isValidMimeType = allowedTypes.test(file.mimetype);
+  const isValidExtName = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+
+  if (isValidMimeType && isValidExtName) {
+    cb(null, true);
+  } else {
+    cb(new Error('Only image files are allowed!'));
+  }
+};
+
+const upload = multer({
+  storage: storage,
+  fileFilter: fileFilter,
+});
+
+// Route handler for adding a user recipe
+const mysql = require('mysql2'); // Import the mysql2 module
 
 router.post(
-  "/addUserRecipe/:username",
-  upload.single("recipe_image"),
-  async (req, res, next) => {
+  '/addUserRecipe/:username',
+  upload.single('image'),
+  async (req, res) => {
     try {
-      console.log("request : ", req.body);
+      // Parse the instructions and ingredients from JSON strings to objects
+      const instructions = JSON.parse(req.body.instructions);
+      const ingredients = JSON.parse(req.body.ingredients);
 
-      let recipeDetails = {
-        username: req.params.username,
+      // Data validation schema using Joi
+      const recipeSchema = Joi.object({
+        title: Joi.string().required(),
+        description: Joi.string().required(),
+        readyInMinutes: Joi.number().integer().required(),
+        instructions: Joi.array().items(Joi.string()).min(1).required(),
+        ingredients: Joi.array()
+          .items(
+            Joi.object({
+              name: Joi.string().required(),
+              amount: Joi.number().required(),
+              unit: Joi.string().required(),
+            })
+          )
+          .min(1)
+          .required(),
+      });
+
+      // Validate the incoming data
+      const { error } = recipeSchema.validate({
+        title: req.body.title,
+        description: req.body.description,
+        readyInMinutes: parseInt(req.body.readyInMinutes, 10),
+        instructions: instructions,
+        ingredients: ingredients,
+      });
+
+      if (error) {
+        // Return validation error to the client
+        return res.status(400).send({ message: error.details[0].message });
+      }
+
+      // Verify that the user exists in the database
+      const userCheckQuery = `SELECT 1 FROM users WHERE user_name = '${req.params.username}'`;
+      const userExists = await execQuery(userCheckQuery);
+
+      if (userExists.length === 0) {
+        // User does not exist
+        return res.status(400).send({ message: 'User does not exist.' });
+      }
+
+      // Prepare recipe details for insertion
+      const recipeDetails = {
+        user_name: req.params.username,
         recipe_title: req.body.title,
         recipe_image: req.file ? req.file.filename : null,
         description: req.body.description,
-        ready_in_minutes: req.body.readyInMinutes,
-        instructions: JSON.stringify(req.body.instructions),
-        ingredients: JSON.stringify(req.body.ingredients),
+        ready_in_minutes: parseInt(req.body.readyInMinutes, 10),
+        instructions: JSON.stringify(instructions),
+        ingredients: JSON.stringify(ingredients),
       };
 
+      // Insert the recipe into the database using escaped variables
       const insertQuery = `
-      INSERT INTO user_created_recipes 
-      (user_name, recipe_title, recipe_image, description, ready_in_minutes, instructions, ingredients) 
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `;
+        INSERT INTO user_created_recipes
+        (user_name, recipe_title, recipe_image, description, ready_in_minutes, instructions, ingredients)
+        VALUES (
+          ${mysql.escape(recipeDetails.user_name)},
+          ${mysql.escape(recipeDetails.recipe_title)},
+          ${mysql.escape(recipeDetails.recipe_image)},
+          ${mysql.escape(recipeDetails.description)},
+          ${mysql.escape(recipeDetails.ready_in_minutes)},
+          ${mysql.escape(recipeDetails.instructions)},
+          ${mysql.escape(recipeDetails.ingredients)}
+        )
+      `;
+      console.log("query", insertQuery);
+      await execQuery(insertQuery);
 
-      await DButils.execQuery(insertQuery, [
-        recipeDetails.username,
-        recipeDetails.recipe_title,
-        recipeDetails.recipe_image,
-        recipeDetails.description,
-        recipeDetails.ready_in_minutes,
-        recipeDetails.instructions,
-        recipeDetails.ingredients,
-      ]);
-
-      res.status(200).send({ message: "Recipe added", success: true });
+      // Successfully added the recipe
+      res.status(200).send({ message: 'Recipe added', success: true });
     } catch (error) {
-      next(error);
+      // Log the error and send a generic error message to the client
+      console.error('Error adding recipe:', error);
+      res.status(500).send({ message: 'An unexpected error occurred.' });
     }
   }
 );
+// Route handler for getting user recipes
+router.get('/myRecipes/:username', async (req, res) => {
+  try {
+    const username = req.params.username;
+
+    // Query to get recipes created by the user
+    const getRecipesQuery = `
+      SELECT
+        id,
+        recipe_title,
+        recipe_image,
+        description,
+        ready_in_minutes
+      FROM user_created_recipes
+      WHERE user_name = ${mysql.escape(username)}
+    `;
+
+    const recipes = await execQuery(getRecipesQuery);
+
+    // Map the database fields to the required recipe structure
+    const mappedRecipes = recipes.map(recipe => ({
+      id: recipe.id,
+      image: recipe.recipe_image
+        ? `${req.protocol}://${req.get('host')}/uploads/${recipe.recipe_image}`
+        : null,
+      title: recipe.recipe_title,
+      readyInMinutes: recipe.ready_in_minutes,
+      aggregateLikes: 0, 
+      vegetarian: false, 
+      vegan: false,      
+      glutenFree: false, 
+      summary: recipe.description,
+    }));
+
+    res.status(200).json(mappedRecipes);
+  } catch (error) {
+    console.error('Error fetching user recipes:', error);
+    res.status(500).send({ message: 'An unexpected error occurred.' });
+  }
+});
 
 module.exports = router;
+
+
+
+

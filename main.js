@@ -1,4 +1,5 @@
 require("dotenv").config();
+
 //#region express configures
 var express = require("express");
 var path = require("path");
@@ -23,15 +24,21 @@ app.use(
   })
 );
 app.use(express.urlencoded({ extended: false })); // parse application/x-www-form-urlencoded
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use("/uploads", express.static(path.join(__dirname, "uploads"))); // todo : check if needed wtf
 
 //local:
 //app.use(express.static(path.join(__dirname, "dist")));
 //remote:
-app.use(express.static(path.join(__dirname, '../assignment2-1-316120096_209512722/dist')));
+app.use(
+  express.static(
+    path.join(__dirname, "../assignment2-1-316120096_209512722/dist")
+  )
+);
 app.get("/", function (req, res) {
   //remote:
-  res.sendFile(path.join(__dirname, '../assignment2-1-316120096_209512722/dist/index.html'));
+  res.sendFile(
+    path.join(__dirname, "../assignment2-1-316120096_209512722/dist/index.html")
+  );
   //local:
   // res.sendFile(__dirname + "/index.html");
 });
@@ -57,7 +64,7 @@ const auth = require("./routes/auth");
 app.get("/alive", (req, res) => res.send("I'm alive"));
 
 // Routings
-app.use("/users", user);
+app.use("/user", user);
 app.use("/recipes", recipes);
 app.use("/auth", auth);
 
@@ -73,15 +80,15 @@ app.use(function (err, req, res, next) {
   res.status(status).send({ message: err.message, success: false });
 });
 
-// const server = app.listen(port, () => {
-//   console.log(`Server listen on port ${port}`);
-// });
+const server = app.listen(port, () => {
+  console.log(`Server is listening on port ${port}`);
+});
 
-// process.on("SIGINT", function () {
-//   if (server) {
-//     server.close(() => console.log("server closed"));
-//   }
-//   process.exit();
-// });
+process.on("SIGINT", function () {
+  if (server) {
+    server.close(() => console.log("server closed"));
+  }
+  process.exit();
+});
 
 module.exports = app;

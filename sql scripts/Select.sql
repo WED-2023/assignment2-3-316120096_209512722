@@ -1,1 +1,1 @@
-SELECT recipe_id FROM watched WHERE user_name='omerlau' ORDER BY watched_at DESC LIMIT 3;
+SELECT * FROM user_created_recipes
