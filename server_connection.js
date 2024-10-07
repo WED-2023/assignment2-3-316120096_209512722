@@ -11,7 +11,7 @@ var httpsOptions = {
 /**
  * Get port from environment and store in Express.
  */
-var port = normalizePort(process.env.PORT || '443');
+var port = normalizePort(process.env.PORT || '3000');
 
 app.set('port', port);
 
@@ -74,11 +74,11 @@ function onError(error) {
 /**
  * Event listener for HTTP server "listening" event.
  */
-server.address("https://Omer-Kitchen.cs.bgu.ac.il");
+server.address("https://omer-kitchen.cs.bgu.ac.il");
 function onListening() {
   var addr = server.address();
   var bind = typeof addr === 'string'
     ? 'pipe ' + addr
     : 'port ' + addr.port;
-    console.log(`Server listen in port ${port} in adrress ${addr.address}`);
+    console.log(`Server listen in port ${port} in adrress ${addr}`);
 }
