@@ -21,6 +21,11 @@
     "express-validator": "^6.4.1",
     "morgan": "^1.10.0",
     "mssql": "^6.2.0",
+<<<<<<< Updated upstream
+=======
+    "multer": "^1.4.5-lts.1",
+    "mysql2": "^3.11.3",
+>>>>>>> Stashed changes
     "nodemon": "^2.0.4",
     "pg": "^8.2.1"
   },
